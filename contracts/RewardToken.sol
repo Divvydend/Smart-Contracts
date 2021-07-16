@@ -1,14 +1,15 @@
+
 //SPDX-License-Identifier: <SPDX-License>
 
 pragma solidity ^0.8.0;
 
 import  "./openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract DivydendToken is ERC20 {
+contract RewardToken is ERC20 {
     
     address owner;
-    string Name = 'Divydend';
-    string Symbol = 'DIVY';
+    string Name = 'reward token';
+    string Symbol = 'RWD';
 
  constructor( address _owner, uint256 initialSupply) ERC20(Name, Symbol){
         

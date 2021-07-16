@@ -6,7 +6,7 @@ import  "./openzeppelin/contracts/token/ERC20/IERC20.sol";
 import './openzeppelin/contracts/utils/math/SafeMath.sol';
 import  './openzeppelin/contracts/security/ReentrancyGuard.sol';
 
-   contract DivydendPool is ReentrancyGuard {
+   contract DivvydendPool is ReentrancyGuard {
  
         address  public DivydendToken;
         address public admin;
@@ -45,7 +45,7 @@ import  './openzeppelin/contracts/security/ReentrancyGuard.sol';
             emit depositReward(msg.sender, amount);
         }
         
-        //lets token holders withdraw reward tokens
+        //lets token holders withdraw reward tokens 
         
         function withdrawReward() nonReentrant public {
             require(IERC20(DivydendToken).balanceOf(msg.sender) > 0 , 'zero divy token balance');
@@ -53,7 +53,7 @@ import  './openzeppelin/contracts/security/ReentrancyGuard.sol';
             uint DivydendTokenSupply = IERC20(DivydendToken).totalSupply();
             uint msgsenderBal = IERC20(DivydendToken).balanceOf(msg.sender);
             
-            uint msgSenderStakeInSupply = (msgsenderBal.div(DivydendTokenSupply)).mul(100).mul(10**18);
+            uint msgSenderStakeInSupply = msgsenderBal/DivydendTokenSupply*100*10**18;
             
             IERC20(rewardToken).transfer(msg.sender, msgSenderStakeInSupply);
             
