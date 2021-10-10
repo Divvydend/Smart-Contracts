@@ -207,5 +207,9 @@ contract DivvydendPool is ReentrancyGuard {
         DivydendToken = newDivydendToken;
         emit newDivydendtoken(DivydendToken);
     }
+
+    function withdrawAccidentallySentTokens( uint amount, address Token) public onlyAdmin{
+        IERC20(Token).transfer(admin, amount);
+    }
 }
 
