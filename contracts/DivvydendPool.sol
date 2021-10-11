@@ -52,15 +52,28 @@ contract DivvydendPool is ReentrancyGuard {
     // lets admin pay in rewards for first token in mixed payment format only 
      function DepositRewardTokenOneMixed( uint amount) public onlyAdmin {
          require(mixedPayments == true, 'cant deposit, use the deposit function for single payment');
-         IERC20(rewardTokenOneForMixed).transferFrom(msg.sender, address(this), amount);
+            if(rewardTokenOneForMixed == ETH /* 'cant deposit eth this way, use the depositETH() function'*/){ 
+           IERC20(rewardTokenOneForMixed).transferFrom(msg.sender, address(this), amount);
           emit depositReward(msg.sender, amount, true);
+            }
+     }
+
+     function depositETH(bool mixedpayment) public payable onlyAdmin{
+         // mixedpayment is for mode of payment, if mixed, mark true, if not, make false
+         if (mixedpayment == true) { 
+         emit depositReward(msg.sender, msg.value, true);
+         } else {
+          emit depositReward(msg.sender, msg.value, false);
+         }
      }
 
     // lets admin pay in rewards for first token in mixed payment format only 
      function DepositRewardTokenTwoMixed( uint amount) public onlyAdmin{
          require(mixedPayments == true, 'cant deposit, use the deposit function for single payment');
+         if(rewardTokenTwoForMixed == ETH /* 'cant deposit eth this way, use the depositETH() function'*/){ 
          IERC20(rewardTokenTwoForMixed).transferFrom(msg.sender, address(this), amount);
           emit depositReward(msg.sender, amount, true);
+         }
      }
 
     //lets token holders withdraw reward tokens
@@ -152,9 +165,12 @@ contract DivvydendPool is ReentrancyGuard {
     }
 
     //set to true if dividend payout is going to be mixed i.e part eth/part usdc, set to false if it wont be mixed i.e only eth or only usdc
+//set rewardtokenoneformixed and rewardtokentwoformixed to address(0) if status is going to be false  
+    function setMixedPayments(bool status, address rewardtokenoneformixed, address rewardtokentwoformixed ) public onlyAdmin {
+        _setMixedPayments(status, rewardtokenoneformixed, rewardtokentwoformixed);
+    }
 
-    function setMixedPayments(bool _status, address rewardtokenoneformixed, address rewardtokentwoformixed ) public onlyAdmin {
-        require( rewardtokenoneformixed != address(0) && rewardtokentwoformixed != address(0), 'cant set to address(0)');
+    function _setMixedPayments(bool _status, address _rewardtokenoneformixed, address _rewardtokentwoformixed ) internal {
         //mixedPayments defailt value is false
         mixedPayments = _status;
 
@@ -185,15 +201,18 @@ contract DivvydendPool is ReentrancyGuard {
             }
         }
     }
-
     // allows for chamge of reward token address in single format not mixed payment format
     function changerewardToken(address newrewardToken) public onlyAdmin {
+        _changerewardToken(newrewardToken);
+    }
+
+    function _changerewardToken(address _newrewardToken) internal {
         require(
             ERC20(newrewardToken).decimals() == 18,
             "reward token decimal must be 18"
         );
         require( newrewardToken != address(0), 'cant set to address(0)');
-        require(mixedPayments == false, 'set mixed payment to false to use');
+        _setMixedPayments(false, address(0), address(0));
         rewardToken = newrewardToken;
         emit newRewardToken(rewardToken);
     }
