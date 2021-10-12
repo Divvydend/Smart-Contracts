@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract DivvydendPool is ReentrancyGuard {
     address public DivydendToken;
     address public admin;
-    address public rewardToken;
+    address public rewardTokenForSingle;
     address public rewardTokenOneForMixed;
     address public rewardTokenTwoForMixed;
     bool private mixedPayments = false; //mixedPayments default value is false
@@ -45,7 +45,7 @@ contract DivvydendPool is ReentrancyGuard {
     // lets admin pay in rewards for single payment only not mixed
     function DepositRewardForSinglePayment(uint256 amount) public onlyAdmin {
         require(mixedPayments == false, 'cant deposit, use the deposit function for mixed payment');
-        IERC20(rewardToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(rewardTokenForSingle).transferFrom(msg.sender, address(this), amount);
         emit depositReward(msg.sender, amount, false);
     }
 
@@ -58,9 +58,9 @@ contract DivvydendPool is ReentrancyGuard {
             }
      }
 
-     function depositETH(bool mixedpayment) public payable onlyAdmin{
+     function depositETH() public payable onlyAdmin{
          // mixedpayment is for mode of payment, if mixed, mark true, if not, make false
-         if (mixedpayment == true) { 
+         if (mixedPayments == true) { 
          emit depositReward(msg.sender, msg.value, true);
          } else {
           emit depositReward(msg.sender, msg.value, false);
@@ -77,7 +77,7 @@ contract DivvydendPool is ReentrancyGuard {
      }
 
     //lets token holders withdraw reward tokens
-    function withdrawReward() public nonReentrant {
+    function withdrawReward() public nonReentrant returns(uint rewardSingle, uint OneRewardPart, uint SecondRewardPart)  {
         require(
             IERC20(DivydendToken).balanceOf(msg.sender) >= 1 * 10**18,
             "divy token balance too low"
@@ -89,15 +89,15 @@ contract DivvydendPool is ReentrancyGuard {
 
         if (mixedPayments == false) {
             uint256 poolRewardBal;
-            if (rewardToken == ETH) {
+            if (rewardTokenForSingle == ETH) {
                 poolRewardBal = address(this).balance;
             } else {
-                poolRewardBal = IERC20(rewardToken).balanceOf(address(this));
+                poolRewardBal = IERC20(rewardTokenForSingle).balanceOf(address(this));
             }
-            uint256 reward = (msgSenderStakeInSupply * poolRewardBal) /
+             rewardSingle = (msgSenderStakeInSupply * poolRewardBal) /
                 100000000000000000000;
-            if (reward != 0) {
-                IERC20(rewardToken).transfer(msg.sender, reward);
+            if (rewardSingle != 0) {
+                IERC20(rewardTokenForSingle).transfer(msg.sender, rewardSingle);
                 emit withdrawreward(msg.sender, true, false);
             } else {
                 revert("no reward to claim");
@@ -109,7 +109,7 @@ contract DivvydendPool is ReentrancyGuard {
 
             if (rewardTokenOneForMixed == ETH) {
                 poolRewardOneBal = address(this).balance;
-                uint256 OneRewardPart = (msgSenderStakeInSupply *
+                 OneRewardPart = (msgSenderStakeInSupply *
                     poolRewardOneBal) / 100000000000000000000;
 
                 if (OneRewardPart != 0) {
@@ -121,7 +121,7 @@ contract DivvydendPool is ReentrancyGuard {
             } else {
                 poolRewardOneBal = IERC20(rewardTokenOneForMixed).balanceOf(address(this));
 
-                uint256 OneRewardPart = (msgSenderStakeInSupply *
+                 OneRewardPart = (msgSenderStakeInSupply *
                     poolRewardOneBal) / 100000000000000000000;
 
                 if (OneRewardPart != 0) {
@@ -133,7 +133,7 @@ contract DivvydendPool is ReentrancyGuard {
             }
             if (rewardTokenTwoForMixed == ETH) {
                 poolRewardTwoBal = address(this).balance;
-                uint256 SecondRewardPart = (msgSenderStakeInSupply *
+                 SecondRewardPart = (msgSenderStakeInSupply *
                     poolRewardTwoBal) / 100000000000000000000;
 
                 if (SecondRewardPart != 0) {
@@ -144,7 +144,7 @@ contract DivvydendPool is ReentrancyGuard {
                 }
             } else {
                 poolRewardTwoBal = IERC20(rewardTokenOneForMixed).balanceOf(address(this));
-                    uint256 SecondRewardPart = (msgSenderStakeInSupply *
+                     SecondRewardPart = (msgSenderStakeInSupply *
                     poolRewardTwoBal) / 100000000000000000000;
 
                 if (SecondRewardPart != 0) {
@@ -178,43 +178,43 @@ contract DivvydendPool is ReentrancyGuard {
             rewardTokenOneForMixed = address(0);
             rewardTokenTwoForMixed = address(0);
         } else {
-            rewardToken = address(0); // this represents reward for singe payment, set to address(0) since payment mode is changed
+            rewardTokenForSingle = address(0); // this represents reward for singe payment, set to address(0) since payment mode is changed
 
-            if( rewardtokenoneformixed == ETH) {
-            rewardTokenOneForMixed = rewardtokenoneformixed;
+            if( _rewardtokenoneformixed == ETH) {
+            rewardTokenOneForMixed = _rewardtokenoneformixed;
             } else{ 
             require(
-            ERC20(rewardtokenoneformixed).decimals() == 18,
+            ERC20(_rewardtokenoneformixed).decimals() == 18,
             "token decimal must be 18"
             );
-            rewardTokenOneForMixed = rewardtokenoneformixed;
+            rewardTokenOneForMixed = _rewardtokenoneformixed;
             }
 
-            if( rewardtokentwoformixed == ETH) {
-            rewardTokenTwoForMixed = rewardtokentwoformixed;
+            if( _rewardtokentwoformixed == ETH) {
+            rewardTokenTwoForMixed = _rewardtokentwoformixed;
             } else{
                  require(
-                  ERC20(rewardtokentwoformixed).decimals() == 18,
+                  ERC20(_rewardtokentwoformixed).decimals() == 18,
                   "token decimal must be 18"
                 );
-                 rewardTokenTwoForMixed = rewardtokentwoformixed;
+                 rewardTokenTwoForMixed = _rewardtokentwoformixed;
             }
         }
     }
     // allows for chamge of reward token address in single format not mixed payment format
-    function changerewardToken(address newrewardToken) public onlyAdmin {
+    function changerewardTokenSingle(address newrewardToken) public onlyAdmin {
         _changerewardToken(newrewardToken);
     }
 
     function _changerewardToken(address _newrewardToken) internal {
         require(
-            ERC20(newrewardToken).decimals() == 18,
+            ERC20(_newrewardToken).decimals() == 18,
             "reward token decimal must be 18"
         );
-        require( newrewardToken != address(0), 'cant set to address(0)');
+        require( _newrewardToken != address(0), 'cant set to address(0)');
         _setMixedPayments(false, address(0), address(0));
-        rewardToken = newrewardToken;
-        emit newRewardToken(rewardToken);
+        rewardTokenForSingle = _newrewardToken;
+        emit newRewardToken(rewardTokenForSingle);
     }
 
     //allows for change of DivydendToken address

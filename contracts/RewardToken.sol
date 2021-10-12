@@ -21,7 +21,6 @@ contract RewardToken is ERC20 {
       modifier onlyOwner() {
             require(owner == msg.sender, 'caller is not admin'); 
             _;
-          
       }
 
     function setOwner(address _owner) external onlyOwner {
